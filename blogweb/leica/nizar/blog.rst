@@ -267,3 +267,55 @@
    As you can notice there are differences starting at 6th decimal
    position. It could be worth trying to use different rounding
    options to see if it helps.
+
+
+.. blogpost::
+   :title: Change of system coordinates
+   :author: nizar
+   :date: 11-26-2013
+
+   I had to interrupt all activities on this project due to my thesis
+   rewriting. Now I am back with some major changes.  After discussing
+   with Chris, we agreed that changing the reference from euclidean to
+   spherical could be helpful since the data are gatehered on a quasi
+   spheric grid.  
+
+   First step was to provide new point types to support spherical
+   coordinates. The struct :
+   
+   .. code-block:: cpp
+
+      struct SphericalPoint
+      {
+	float r;
+	float theta;
+	float phi;
+      }
+
+   is meant to hold the converted euclidean coordinates.
+   
+   Then I run some statistical on the samples point cloud. I computed
+   the mean value for :math:`\theta` and :math:`\phi` along with their
+   respective variance respectively : :math:`\mu_{\theta}`,
+   :math:`\mu_{\phi}`, :math:`\sigma_{\theta}` and
+   :math:`\sigma_{\phi}`.
+   
+   +-------------------------+-----------+------------+
+   | file                    | indoor.ptx|outodoor.ptx|
+   +=========================+===========+============+
+   | :math:`\mu_{\theta}`    | 79.6891   | 47.4538    |
+   +-------------------------+-----------+------------+
+   | :math:`\sigma_{\theta}` | 50.6943   | 64.5744    |
+   +-------------------------+-----------+------------+
+   | :math:`\mu_{\phi}`      | 81.5417   | 31.7906    |
+   +-------------------------+-----------+------------+
+   | :math:`\sigma_{\phi}`   | 28.8899   | 42.9106    |
+   +-------------------------+-----------+------------+
+
+   What we learned here is that the range are limited but we can not
+   fix it so we will keep a [0..360] range for both :math:`\theta` and
+   :math:`\phi`.
+
+   Next step is to sample the angles and save the interval. Also
+   choosing the right angle representation i.e. radian or degree could
+   be critical.
