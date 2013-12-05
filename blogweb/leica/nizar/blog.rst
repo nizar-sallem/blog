@@ -287,7 +287,7 @@
 
       struct SphericalPoint
       {
-	float r;
+	float radius;
 	float theta;
 	float phi;
       }
@@ -319,3 +319,55 @@
    Next step is to sample the angles and save the interval. Also
    choosing the right angle representation i.e. radian or degree could
    be critical.
+
+.. blogpost::
+   :title: Using indexed spherical points
+   :author: nizar
+   :date: 12-05-2013
+
+   After some experiments with radians and degrees I found that using
+   radians allow for less corruption. The new data structure to hold
+   spherical coordinates is:
+
+   .. code-block:: cpp
+
+      struct IndexedSphericalPoint
+      {
+	float radius;
+	uint16_t indexed_theta;
+	int16_t indexed_phi;
+      }
+      
+
+   **indexed_theta** and **indexed_phi** are obtained as:
+     * **indexed_theta** = :math:`\theta * 10000`
+     * **indexed_phi** = :math:`\phi * 10000`
+
+   Also while experimenting with **half** I noticed that intensities
+   are preserved within the given threshold so we can use half float
+   to store intensity information.
+
+   Another remark concerns **origin** points. Indeed, a PTX file will
+   typically contain several occurences of the origin point. In the
+   given dataset this is approximately :math:`10\%` of the file content.
+
+   Putting all this together I ended up with the following compressed
+   file structure :
+
+     * file header ;
+     * origin point occurences (number of occurences followed by points indices) ;
+     * **radius indexed_theta indexed_phi intensity** for other points with respective types **float uint16_t int16_t half**;
+     * compressed image if RGB data is available.
+
+   With this I updated the writeBinaryCompressed method presented
+   earlier and I ended up with this:
+  
+   +-------------+-------+-----+-----------------------+
+   |    File     | ASCII | LZF | indexed spherical LZF |
+   +=============+=======+=====+=======================+
+   | outdoor.ptx | 212M  | 57M |       41M             |
+   +-------------+-------+-----+-----------------------+
+   
+   This translates to 7.07 bytes per point vs 26.3 bytes per point for this file.
+
+
